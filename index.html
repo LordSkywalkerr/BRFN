@@ -136,13 +136,14 @@ const stages = [
 "https://i.ibb.co/MDyBmbPD/a-ama5-Photoroom.png"
 ];
 
-const targetDate = new Date(2026,5,2);
-
-let waterCount = 0;
-let lastWater = "";
 let cheatMode = false;
 let simulatedDaysPassed = 0;
 
+// 💾 LOCAL STORAGE YÜKLE
+let waterCount = parseInt(localStorage.getItem("waterCount")) || 0;
+let lastWater = localStorage.getItem("lastWater") || "";
+
+// DOM
 const title = document.getElementById("title");
 const statusInfo = document.getElementById("statusInfo");
 const plant = document.getElementById("plant");
@@ -151,19 +152,19 @@ const waterBtn = document.getElementById("waterBtn");
 const letterBtn = document.getElementById("letterBtn");
 const modal = document.getElementById("modal");
 
+// 📅 BUGÜN
 function today(){
 const d = new Date();
 return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
 
-// 📅 STABİL GÜN HESABI
+// 📅 GÜN HESABI
 function daysRemaining(){
 const now = new Date();
-
-const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 const target = new Date(2026, 5, 2);
 
-let diff = target.getTime() - today.getTime();
+let diff = target.getTime() - todayDate.getTime();
 let days = Math.round(diff / (1000 * 60 * 60 * 24));
 
 if(cheatMode){
@@ -173,54 +174,67 @@ days = Math.max(0, days - simulatedDaysPassed);
 return Math.max(0, days);
 }
 
-// 🌱 gereken sulama = gün
+// 🌱 gereksinim
 function requiredWater(){
 return daysRemaining();
 }
 
-// 🌸 büyüme sistemi
+// 🌸 stage
 function getStage(){
 let r = requiredWater();
 let progress = waterCount / Math.max(1, r);
-
 let maxStage = stages.length - 2;
 return Math.min(Math.floor(progress * maxStage), maxStage);
 }
 
-// 🌸 ÇİÇEK SADECE SON GÜN
+// 🌸 açık mı
 function isFlowerOpen(){
 return daysRemaining() === 0 && waterCount >= requiredWater();
 }
 
+// 💾 KAYDET
+function save(){
+localStorage.setItem("waterCount", waterCount);
+localStorage.setItem("lastWater", lastWater);
+}
+
+// 🖥 UPDATE
 function update(){
 
 let remaining = requiredWater();
 let stage = getStage();
 
-// 🌱 görsel
+// 🌸 görsel
 plant.innerHTML = `<img src="${stages[stage]}">`;
 
 // 📊 progress
 fill.style.width = (waterCount / Math.max(1, remaining)) * 100 + "%";
 
-// 🧠 başlık
+// 🧠 title
 title.textContent = remaining > 0
 ? `Büyük Güne Son ${remaining} Gün`
 : "Büyük Gün Geldi! 🎉";
 
-// 💧 durum
+// 💧 status
 statusInfo.textContent = `Sulama: ${waterCount} / ${remaining}`;
 
-// 🌸 ÇİÇEK AÇILMA
+// 🌸 çiçek açtıysa
 if(isFlowerOpen()){
 plant.innerHTML = `<img src="${stages[stages.length - 1]}">`;
 waterBtn.style.display = "none";
 letterBtn.style.display = "inline-block";
-}
+} else {
+waterBtn.style.display = "inline-block";
+letterBtn.style.display = "none";
 }
 
+save();
+}
+
+// 💧 SULAMA + HİLE RESET EKLENDİ
 function water(){
 
+// aynı gün kontrol
 if(lastWater === new Date().toDateString() && !cheatMode){
 alert("Bugün zaten suladın 🌸");
 return;
@@ -228,11 +242,19 @@ return;
 
 let needed = requiredWater();
 
+// 🌸 NORMAL BÜYÜME
 if(waterCount < needed){
 waterCount++;
 lastWater = new Date().toDateString();
 }
+else if(needed === 0 && waterCount >= needed){
+    // 💥 HİLE MODU: çiçek açmışsa tekrar sulama → reset
+    waterCount = 0;
+    lastWater = "";
+    alert("Hile modu: çiçek yeniden başlatıldı 🌱");
+}
 
+// 🧠 hile simülasyon
 if(cheatMode){
 simulatedDaysPassed++;
 }
@@ -240,7 +262,7 @@ simulatedDaysPassed++;
 update();
 }
 
-// ✨ HİLE MODU (5 tık)
+// ✨ HİLE MODU
 let clicks = 0;
 let timeout;
 
@@ -252,7 +274,6 @@ clearTimeout(timeout);
 if(clicks >= 5){
 cheatMode = !cheatMode;
 clicks = 0;
-
 alert(cheatMode ? "Hile açıldı 🌸" : "Hile kapandı 🌸");
 update();
 }
@@ -269,8 +290,10 @@ modal.addEventListener("click", ()=>{
 modal.classList.remove("show");
 });
 
-update();
 waterBtn.addEventListener("click", water);
+
+// 🚀 BAŞLAT
+update();
 
 </script>
 
