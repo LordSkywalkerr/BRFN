@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geri Sayım 🌸</title>
+
+<style>
+body{
+margin:0;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+font-family:sans-serif;
+background:linear-gradient(to bottom,#dbeafe,#fce7f3);
+user-select:none;
+}
+
+.container{
+width:100%;
+max-width:420px;
+text-align:center;
+display:flex;
+flex-direction:column;
+gap:15px;
+padding:20px;
+}
+
+.title{
+font-size:28px;
+font-weight:bold;
+color:#1e293b;
+cursor:pointer;
+}
+
+.status-info{
+font-size:14px;
+color:#64748b;
+font-weight:bold;
+}
+
+.plant{
+display:flex;
+justify-content:center;
+align-items:center;
+margin:15px 0;
+}
+
+.plant img{
+width:140px;
+height:140px;
+object-fit:contain;
+}
+
+.btn{
+padding:15px;
+border:none;
+border-radius:999px;
+background:#0ea5e9;
+color:white;
+font-size:18px;
+cursor:pointer;
+}
+
+.progress{
+height:10px;
+background:#ddd;
+border-radius:10px;
+overflow:hidden;
+}
+
+.fill{
+height:100%;
+width:0%;
+background:#10b981;
+}
+
+.modal{
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.5);
+justify-content:center;
+align-items:center;
+}
+
+.modal.show{display:flex;}
+
+.box{
+background:white;
+padding:25px;
+border-radius:12px;
+text-align:center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="title" id="title">Yükleniyor...</div>
+<div class="status-info" id="statusInfo">...</div>
+
+<div class="plant" id="plant"></div>
+
+<div class="progress">
+<div class="fill" id="fill"></div>
+</div>
+
+<button class="btn" id="waterBtn">💧 Sul</button>
+<button class="btn" id="letterBtn" style="display:none;">✉️ Mektup</button>
+
+</div>
+
+<div class="modal" id="modal">
+<div class="box">
+Bugün tüm dünya seninle aydınlandı.<br>
+Güneş senin yanında sönük kaldı.<br>
+Athena yanında diz çöktü.<br><br>
+Hayatıma girdiğin için çok mutluyum.<br>
+Seni çok seviyorum.<br><br>
+İyi ki doğdun my light in the dark :) ❤️
+</div>
+</div>
+
+<script>
+
+// 🌸 GÖRSELLER
+const stages = [
+"https://i.ibb.co/d07VLTrD/a-ama1-Photoroom.png",
+"https://i.ibb.co/QFwS36X9/a-ama2-Photoroom.png",
+"https://i.ibb.co/HftQVpJv/a-ama3-Photoroom.png",
+"https://i.ibb.co/DD9rHMnZ/a-ama4-Photoroom.png",
+"https://i.ibb.co/MDyBmbPD/a-ama5-Photoroom.png"
+];
+
+const targetDate = new Date(2026,5,2);
+
+let waterCount = 0;
+let lastWater = "";
+let cheatMode = false;
+let simulatedDaysPassed = 0;
+
+const title = document.getElementById("title");
+const statusInfo = document.getElementById("statusInfo");
+const plant = document.getElementById("plant");
+const fill = document.getElementById("fill");
+const waterBtn = document.getElementById("waterBtn");
+const letterBtn = document.getElementById("letterBtn");
+const modal = document.getElementById("modal");
+
+function today(){
+const d = new Date();
+return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+// 📅 STABİL GÜN HESABI
+function daysRemaining(){
+const now = new Date();
+
+const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+const target = new Date(2026, 5, 2);
+
+let diff = target.getTime() - today.getTime();
+let days = Math.round(diff / (1000 * 60 * 60 * 24));
+
+if(cheatMode){
+days = Math.max(0, days - simulatedDaysPassed);
+}
+
+return Math.max(0, days);
+}
+
+// 🌱 gereken sulama = gün
+function requiredWater(){
+return daysRemaining();
+}
+
+// 🌸 büyüme sistemi
+function getStage(){
+let r = requiredWater();
+let progress = waterCount / Math.max(1, r);
+
+let maxStage = stages.length - 2;
+return Math.min(Math.floor(progress * maxStage), maxStage);
+}
+
+// 🌸 ÇİÇEK SADECE SON GÜN
+function isFlowerOpen(){
+return daysRemaining() === 0 && waterCount >= requiredWater();
+}
+
+function update(){
+
+let remaining = requiredWater();
+let stage = getStage();
+
+// 🌱 görsel
+plant.innerHTML = `<img src="${stages[stage]}">`;
+
+// 📊 progress
+fill.style.width = (waterCount / Math.max(1, remaining)) * 100 + "%";
+
+// 🧠 başlık
+title.textContent = remaining > 0
+? `Büyük Güne Son ${remaining} Gün`
+: "Büyük Gün Geldi! 🎉";
+
+// 💧 durum
+statusInfo.textContent = `Sulama: ${waterCount} / ${remaining}`;
+
+// 🌸 ÇİÇEK AÇILMA
+if(isFlowerOpen()){
+plant.innerHTML = `<img src="${stages[stages.length - 1]}">`;
+waterBtn.style.display = "none";
+letterBtn.style.display = "inline-block";
+}
+}
+
+function water(){
+
+if(lastWater === new Date().toDateString() && !cheatMode){
+alert("Bugün zaten suladın 🌸");
+return;
+}
+
+let needed = requiredWater();
+
+if(waterCount < needed){
+waterCount++;
+lastWater = new Date().toDateString();
+}
+
+if(cheatMode){
+simulatedDaysPassed++;
+}
+
+update();
+}
+
+// ✨ HİLE MODU (5 tık)
+let clicks = 0;
+let timeout;
+
+title.addEventListener("click", ()=>{
+
+clicks++;
+clearTimeout(timeout);
+
+if(clicks >= 5){
+cheatMode = !cheatMode;
+clicks = 0;
+
+alert(cheatMode ? "Hile açıldı 🌸" : "Hile kapandı 🌸");
+update();
+}
+
+timeout = setTimeout(()=> clicks = 0, 1500);
+});
+
+// ✉️ MEKTUP
+letterBtn.addEventListener("click", ()=>{
+modal.classList.add("show");
+});
+
+modal.addEventListener("click", ()=>{
+modal.classList.remove("show");
+});
+
+update();
+waterBtn.addEventListener("click", water);
+
+</script>
+
+</body>
+</html>
