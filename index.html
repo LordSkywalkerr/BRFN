@@ -136,12 +136,13 @@ const stages = [
 "https://i.ibb.co/MDyBmbPD/a-ama5-Photoroom.png"
 ];
 
-let cheatMode = false;
-let simulatedDaysPassed = 0;
-
 // 💾 LOCAL STORAGE YÜKLE
 let waterCount = parseInt(localStorage.getItem("waterCount")) || 0;
 let lastWater = localStorage.getItem("lastWater") || "";
+
+// 🧠 HİLE
+let cheatMode = false;
+let simulatedDaysPassed = 0;
 
 // DOM
 const title = document.getElementById("title");
@@ -152,13 +153,7 @@ const waterBtn = document.getElementById("waterBtn");
 const letterBtn = document.getElementById("letterBtn");
 const modal = document.getElementById("modal");
 
-// 📅 BUGÜN
-function today(){
-const d = new Date();
-return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-}
-
-// 📅 GÜN HESABI
+// 📅 GÜN
 function daysRemaining(){
 const now = new Date();
 const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -174,12 +169,10 @@ days = Math.max(0, days - simulatedDaysPassed);
 return Math.max(0, days);
 }
 
-// 🌱 gereksinim
 function requiredWater(){
 return daysRemaining();
 }
 
-// 🌸 stage
 function getStage(){
 let r = requiredWater();
 let progress = waterCount / Math.max(1, r);
@@ -187,7 +180,6 @@ let maxStage = stages.length - 2;
 return Math.min(Math.floor(progress * maxStage), maxStage);
 }
 
-// 🌸 açık mı
 function isFlowerOpen(){
 return daysRemaining() === 0 && waterCount >= requiredWater();
 }
@@ -204,37 +196,31 @@ function update(){
 let remaining = requiredWater();
 let stage = getStage();
 
-// 🌸 görsel
 plant.innerHTML = `<img src="${stages[stage]}">`;
 
-// 📊 progress
 fill.style.width = (waterCount / Math.max(1, remaining)) * 100 + "%";
 
-// 🧠 title
 title.textContent = remaining > 0
 ? `Büyük Güne Son ${remaining} Gün`
 : "Büyük Gün Geldi! 🎉";
 
-// 💧 status
 statusInfo.textContent = `Sulama: ${waterCount} / ${remaining}`;
 
-// 🌸 çiçek açtıysa
 if(isFlowerOpen()){
 plant.innerHTML = `<img src="${stages[stages.length - 1]}">`;
-waterBtn.style.display = "none";
 letterBtn.style.display = "inline-block";
+waterBtn.style.display = "none";
 } else {
-waterBtn.style.display = "inline-block";
 letterBtn.style.display = "none";
+waterBtn.style.display = "inline-block";
 }
 
-save();
+save(); // ⭐ LOCAL STORAGE AKTİF KISIM
 }
 
-// 💧 SULAMA + HİLE RESET EKLENDİ
+// 💧 SULAMA
 function water(){
 
-// aynı gün kontrol
 if(lastWater === new Date().toDateString() && !cheatMode){
 alert("Bugün zaten suladın 🌸");
 return;
@@ -242,19 +228,16 @@ return;
 
 let needed = requiredWater();
 
-// 🌸 NORMAL BÜYÜME
 if(waterCount < needed){
 waterCount++;
 lastWater = new Date().toDateString();
 }
-else if(needed === 0 && waterCount >= needed){
-    // 💥 HİLE MODU: çiçek açmışsa tekrar sulama → reset
-    waterCount = 0;
-    lastWater = "";
-    alert("Hile modu: çiçek yeniden başlatıldı 🌱");
+else if(needed === 0){
+waterCount = 0;
+lastWater = "";
+alert("Çiçek yeniden başlatıldı 🌱");
 }
 
-// 🧠 hile simülasyon
 if(cheatMode){
 simulatedDaysPassed++;
 }
@@ -292,7 +275,6 @@ modal.classList.remove("show");
 
 waterBtn.addEventListener("click", water);
 
-// 🚀 BAŞLAT
 update();
 
 </script>
